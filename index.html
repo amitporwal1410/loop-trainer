@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loop Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14161a; --panel:#1c1f26; --panel2:#21252e; --line:#2b2f38;
+    --text:#e8e6e1; --muted:#8b909c; --faint:#5b6068;
+    --amber:#f5a623; --warn:#e2603f; --sage:#6fae6f; --steel:#5f7fa6;
+    --display:'Space Grotesk',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--display);
+    -webkit-font-smoothing:antialiased;line-height:1.5}
+  .wrap{max-width:760px;margin:0 auto;padding:24px 20px 90px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .brand{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
+  .gear{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:7px 12px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;cursor:pointer}
+  .gear:hover{border-color:var(--faint);color:var(--text)}
+  h1{font-size:25px;font-weight:700;letter-spacing:-.01em;margin:2px 0 2px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .card+.card{margin-top:13px}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .opt{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:9px;
+    padding:9px 13px;font-family:var(--display);font-size:13.5px;cursor:pointer;transition:.15s}
+  .opt:hover{border-color:var(--faint)}
+  .opt.on{border-color:var(--amber);background:rgba(245,166,35,.1);color:var(--amber)}
+  .opt small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+  .opt.on small{color:rgba(245,166,35,.7)}
+  .go{margin-top:20px;width:100%;background:var(--amber);color:#1a1205;border:none;border-radius:11px;
+    padding:15px;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.02em;cursor:pointer}
+  .go:hover{filter:brightness(1.06)}
+  .go:disabled{background:var(--line);color:var(--faint);cursor:not-allowed}
+  .ghost{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;
+    padding:12px 16px;font-family:var(--display);font-size:14px;cursor:pointer}
+  .ghost:hover{border-color:var(--faint);color:var(--text)}
+  input[type=text],input[type=password],textarea,select{width:100%;background:var(--panel2);border:1px solid var(--line);
+    border-radius:10px;color:var(--text);font-family:var(--display);font-size:14.5px;padding:12px}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--amber)}
+  textarea{min-height:120px;resize:vertical}
+  .hint{font-size:12.5px;color:var(--faint);margin-top:8px}
+  .hint a{color:var(--muted)}
+  .banner{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.35);border-radius:11px;padding:12px 14px;font-size:13.5px;color:var(--amber);margin-bottom:14px}
+  .banner.ok{background:rgba(111,174,111,.08);border-color:rgba(111,174,111,.35);color:var(--sage)}
+  .stack>*+*{margin-top:12px}
+  .field-label{font-size:13px;color:var(--muted);margin-bottom:6px}
+
+  /* practice */
+  .qhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px}
+  .qmeta{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .qmeta b{color:var(--amber);font-weight:500}
+  .progress{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .question{font-size:22px;line-height:1.35;font-weight:500;letter-spacing:-.01em;margin:2px 0 22px}
+  .stage{display:flex;flex-direction:column;align-items:center;gap:4px;margin:6px 0 8px}
+  .ring-wrap{position:relative;width:230px;height:230px}
+  .ring-wrap svg{transform:rotate(-90deg)}
+  .ringbg{fill:none;stroke:var(--line);stroke-width:10}
+  .ringfg{fill:none;stroke:var(--steel);stroke-width:10;stroke-linecap:round;transition:stroke .3s}
+  .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .bigtime{font-family:var(--mono);font-size:44px;font-weight:700;letter-spacing:-.02em}
+  .ring-state{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:2px;height:14px}
+  .cue{margin-top:13px;text-align:center;font-size:14px;color:var(--amber);font-weight:600;min-height:20px;opacity:0;transition:.3s;padding:0 10px}
+  .cue.show{opacity:1}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  .pulsing{animation:pulse 1.1s ease-in-out infinite}
+  .counters{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0 4px}
+  .counter{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 8px;text-align:center}
+  .counter .n{font-family:var(--mono);font-size:22px;font-weight:700}
+  .counter .t{font-size:10.5px;color:var(--muted);letter-spacing:.04em;margin-top:1px}
+  .counter.hit{border-color:var(--warn)} .counter.hit .n{color:var(--warn)}
+  .mic{margin:18px 0 0;display:flex;gap:10px}.mic button{flex:1}
+  .recbtn{background:var(--sage);color:#0c1a0c;border:none;border-radius:11px;padding:15px;font-family:var(--display);font-weight:700;font-size:15px;cursor:pointer}
+  .recbtn.live{background:var(--warn);color:#1c0a06}
+  .recbtn.live::before{content:'● ';animation:pulse 1s infinite}
+  .transcript{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:13px;font-size:14px;color:var(--muted);min-height:54px;white-space:pre-wrap}
+  .transcript:empty::before{content:'Your words appear here as you speak.';color:var(--faint)}
+  .footer-actions{display:flex;gap:10px;margin-top:22px}.footer-actions button{flex:1}
+
+  /* feedback */
+  .verdict{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .score{font-family:var(--mono);font-size:40px;font-weight:700;line-height:1}.score small{font-size:16px;color:var(--faint)}
+  .vtext{font-size:15px}
+  .fb-sec{margin-top:16px}
+  .fb-sec h3{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 9px}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:20px;margin:0 6px 6px 0;border:1px solid var(--line)}
+  .pill.ok{color:var(--sage);border-color:rgba(111,174,111,.4)}
+  .pill.no{color:var(--warn);border-color:rgba(226,96,63,.4)}
+  .pill.mid{color:var(--amber);border-color:rgba(245,166,35,.4)}
+  .note{background:var(--panel2);border-left:3px solid var(--line);border-radius:0 9px 9px 0;padding:11px 14px;margin:8px 0;font-size:14.5px}
+  .note.cut{border-left-color:var(--warn)}.note.add{border-left-color:var(--sage)}.note.flag{border-left-color:var(--amber)}
+  .note .nlab{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:3px}
+  .loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;padding:8px 0}
+  .spin{width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--amber);border-radius:50%;animation:rot .8s linear infinite}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  .keymeta{font-size:13px;color:var(--muted);margin-top:10px}.keymeta b{color:var(--text);font-weight:600}
+  .followup{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:13px;margin-top:10px;font-size:14.5px}
+  .followup .nlab{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:4px}
+  .summ-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .summ-row:last-child{border-bottom:none}.summ-row .sc{font-family:var(--mono);font-weight:700}
+  .hide{display:none}
+
+  /* settings drawer */
+  .drawer{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:40px 16px}
+  .drawer.open{display:flex}
+  .drawer .panel{max-width:560px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;max-height:86vh;overflow:auto}
+  .drawer h2{font-size:18px;margin:0 0 4px}
+  .closeX{float:right;background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">Loop Trainer</div>
+    <button class="gear" id="openSettings">Settings</button>
+  </div>
+
+  <!-- SETUP -->
+  <div id="setup">
+    <h1>Rehearse the loop, on the clock</h1>
+    <div class="sub">Headline in 90 seconds, then the checkpoint. Tics caught live. Your answer is judged on its own merits, not against a script.</div>
+
+    <div id="keyBanner" class="banner">No API key set. Delivery metrics work now. Add your Anthropic key in Settings to turn on content grading.</div>
+
+    <div class="card">
+      <div class="label">1. Mode</div>
+      <div class="opts" id="modeOpts">
+        <div class="opt on" data-mode="single">Single<small>One question, one rep</small></div>
+        <div class="opt" data-mode="drill">Drill one story<small>Intro, then follow-ups from your answer</small></div>
+        <div class="opt" data-mode="loop">Loop<small>A few questions in a row</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">2. Question source</div>
+      <div class="opts" id="srcOpts">
+        <div class="opt on" data-src="theme">From a theme</div>
+        <div class="opt" data-src="free">I'll write the question</div>
+      </div>
+      <div id="themeWrap" style="margin-top:14px">
+        <div class="opts" id="themeOpts"></div>
+      </div>
+      <div id="freeWrap" class="hide" style="margin-top:14px">
+        <div class="field-label">Paste the interviewer's question (or your opener for drill mode)</div>
+        <textarea id="freeQ" style="min-height:70px" placeholder="e.g. Walk me through the hardest technical decision you've made."></textarea>
+      </div>
+    </div>
+
+    <div class="card" id="loopLenCard">
+      <div class="label" id="lenLabel">Length</div>
+      <div class="opts" id="lenOpts">
+        <div class="opt on" data-len="3">3</div>
+        <div class="opt" data-len="4">4</div>
+        <div class="opt" data-len="5">5</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">3. How you answer</div>
+      <div class="opts" id="inputOpts">
+        <div class="opt on" data-input="voice">Speak it<small>Recommended</small></div>
+        <div class="opt" data-input="text">Type it<small>Fallback</small></div>
+      </div>
+      <div id="voiceWarn" class="hint hide" style="color:var(--warn)">Speech recognition not available here. Use Chrome, or switch to Type it.</div>
+    </div>
+
+    <button class="go" id="startBtn">Start</button>
+  </div>
+
+  <!-- PRACTICE -->
+  <div id="practice" class="hide">
+    <div class="qhead"><div class="qmeta" id="qmeta"></div><div class="progress" id="qprog"></div></div>
+    <div class="question" id="qtext"></div>
+    <div class="stage">
+      <div class="ring-wrap">
+        <svg width="230" height="230" viewBox="0 0 230 230">
+          <circle class="ringbg" cx="115" cy="115" r="105"></circle>
+          <circle class="ringfg" id="ringfg" cx="115" cy="115" r="105"></circle>
+        </svg>
+        <div class="ring-center"><div class="bigtime" id="bigtime">0:00</div><div class="ring-state" id="ringstate">headline window</div></div>
+      </div>
+      <div class="cue" id="cue">Checkpoint. Pause and hand them the wheel.</div>
+    </div>
+    <div class="counters">
+      <div class="counter" id="cWords"><div class="n">0</div><div class="t">words</div></div>
+      <div class="counter" id="cRight"><div class="n">0</div><div class="t">"right?"</div></div>
+      <div class="counter" id="cKind"><div class="n">0</div><div class="t">"kind of"</div></div>
+      <div class="counter" id="cFill"><div class="n">0</div><div class="t">fillers</div></div>
+    </div>
+    <div id="voiceArea">
+      <div class="mic"><button class="recbtn" id="recBtn">Start speaking</button></div>
+      <div class="transcript" id="transcript"></div>
+    </div>
+    <div id="textArea" class="hide"><textarea id="answerBox" placeholder="Type your answer. The timer is running."></textarea></div>
+    <div class="footer-actions">
+      <button class="ghost" id="abortBtn">Quit</button>
+      <button class="go" id="doneBtn" style="margin-top:0">Done, grade it</button>
+    </div>
+  </div>
+
+  <!-- FEEDBACK -->
+  <div id="feedback" class="hide">
+    <div class="qmeta" id="fbCat" style="margin-bottom:6px"></div>
+    <h1 style="font-size:20px;margin:0 0 16px" id="fbQ"></h1>
+    <div class="card"><div class="label">Delivery, measured</div><div id="deliveryFb"></div></div>
+    <div class="card"><div class="label">Content review</div><div id="contentFb"></div></div>
+    <div class="footer-actions">
+      <button class="ghost" id="retryBtn">Retry this one</button>
+      <button class="go" id="nextBtn" style="margin-top:0">Next</button>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div id="summary" class="hide">
+    <div class="brand">Session complete</div>
+    <h1 style="margin:6px 0 14px">Summary</h1>
+    <div class="card"><div id="summRows"></div></div>
+    <div class="card"><div class="label">Patterns to fix</div><div id="patterns"></div></div>
+    <button class="go" id="restartBtn">New session</button>
+  </div>
+
+</div>
+
+<!-- SETTINGS DRAWER -->
+<div class="drawer" id="drawer">
+  <div class="panel">
+    <button class="closeX" id="closeSettings">×</button>
+    <h2>Settings</h2>
+    <div class="sub" style="margin-bottom:16px">Everything here is stored only in this browser. Your key is sent only to Anthropic.</div>
+    <div class="stack">
+      <div>
+        <div class="field-label">Anthropic API key</div>
+        <input type="password" id="apiKey" placeholder="sk-ant-...">
+        <div class="hint">Create one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. Required only for content grading.</div>
+      </div>
+      <div>
+        <div class="field-label">Model</div>
+        <select id="model">
+          <option value="claude-sonnet-4-6">claude-sonnet-4-6 (balanced)</option>
+          <option value="claude-opus-4-8">claude-opus-4-8 (deepest)</option>
+          <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 (fast, cheap)</option>
+        </select>
+      </div>
+      <div>
+        <div class="field-label">Your story bank (optional)</div>
+        <textarea id="bankText" placeholder="Paste your story bank here, or use the file button below. When present, grading fact-checks your answer against your own record instead of scoring blind."></textarea>
+        <div class="hint" style="margin-top:8px;display:flex;align-items:center;gap:10px">
+          <input type="file" id="bankFile" accept=".md,.txt,.text" style="font-size:12px;color:var(--muted)">
+          <span id="bankStatus"></span>
+        </div>
+      </div>
+      <button class="go" id="saveSettings" style="margin-top:6px">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- safe storage (falls back to memory if localStorage blocked) ----------
+const mem={};
+const store={
+  get(k){ try{return localStorage.getItem(k);}catch(e){return mem[k]??null;} },
+  set(k,v){ try{localStorage.setItem(k,v);}catch(e){mem[k]=v;} }
+};
+const el=id=>document.getElementById(id);
+
+// ---------- settings ----------
+const CFG={key:'',model:'claude-sonnet-4-6',bank:''};
+function loadCfg(){
+  CFG.key=store.get('lt_key')||''; CFG.model=store.get('lt_model')||'claude-sonnet-4-6'; CFG.bank=store.get('lt_bank')||'';
+  el('apiKey').value=CFG.key; el('model').value=CFG.model; el('bankText').value=CFG.bank;
+  updateKeyBanner();
+}
+function updateKeyBanner(){
+  const b=el('keyBanner');
+  if(CFG.key){ b.className='banner ok'; b.textContent='Grading is on'+(CFG.bank?', fact-checking against your story bank.':'. No story bank loaded, so answers are judged blind on their own merits.'); }
+  else{ b.className='banner'; b.textContent='No API key set. Delivery metrics work now. Add your Anthropic key in Settings to turn on content grading.'; }
+}
+el('openSettings').onclick=()=>el('drawer').classList.add('open');
+el('closeSettings').onclick=()=>el('drawer').classList.remove('open');
+el('drawer').onclick=e=>{ if(e.target===el('drawer')) el('drawer').classList.remove('open'); };
+el('bankFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader(); r.onload=()=>{ el('bankText').value=r.result; el('bankStatus').textContent=f.name+' loaded'; }; r.readAsText(f);
+};
+el('saveSettings').onclick=()=>{
+  CFG.key=el('apiKey').value.trim(); CFG.model=el('model').value; CFG.bank=el('bankText').value.trim();
+  store.set('lt_key',CFG.key); store.set('lt_model',CFG.model); store.set('lt_bank',CFG.bank);
+  updateKeyBanner(); el('drawer').classList.remove('open');
+};
+
+// ---------- question themes (prompts only, no answer keys) ----------
+const THEMES={
+  'Zero to one':["Walk me through a program you built from zero to one. What made it hard?","Tell me about the most ambitious thing you have shipped.","How do you start a program when there is no existing structure?"],
+  'Hard technical decision':["Walk me through the hardest technical decision you have made. Name the alternative you rejected and why.","Tell me about a time you disagreed with engineering on a technical approach.","Describe a system or architecture tradeoff whose consequences you owned."],
+  'Ambiguity':["Tell me about a decision you made with incomplete information.","Describe a time requirements were unclear and you had to create clarity.","How do you operate when no one agrees on the goal?"],
+  'Influence without authority':["Tell me about a time you influenced a senior leader without formal authority.","Describe getting a team that did not report to you to change course.","How did you turn a no into a yes?"],
+  'Inherited / turnaround':["Tell me about a program you inherited that was off track. What did you do?","Describe rebuilding trust in a process or team.","How did you diagnose why something kept failing?"],
+  'Measurement':["Walk me through how you define success metrics for a program.","Tell me about a metric you chose and one you rejected, and why.","How do you know your program is actually working?"],
+  'Conflict / pushback':["Tell me about a significant conflict and how you handled it.","Describe pushing back on a decision you thought was wrong.","When did you hold your ground, and when did you concede?"],
+  'Failure':["What is something you got wrong? What did it cost?","Tell me about a rollout that did not go as planned.","Describe a time you misjudged something at scale."],
+  'Cross-functional alignment':["Describe a cross-functional program where alignment was hard.","How do you get teams with competing priorities to move together?","Tell me about surfacing a problem no single team could see."],
+  'Their company / role':["How do you think about your role as a TPM?","Why this company, and what do you know about where it is heading?","What separates a senior TPM from a staff or principal one?"]
+};
+
+// ---------- state ----------
+const S={mode:'single',src:'theme',theme:Object.keys(THEMES)[0],len:3,input:'voice',
+  queue:[],idx:0,results:[],drillLeft:0};
+
+Object.keys(THEMES).forEach((t,i)=>{const d=document.createElement('div');d.className='opt'+(i===0?' on':'');d.dataset.theme=t;d.textContent=t;el('themeOpts').appendChild(d);});
+
+function pick(c,a,v){[...c.children].forEach(x=>x.classList.toggle('on',x.dataset[a]===v));}
+el('modeOpts').onclick=e=>{const o=e.target.closest('.opt');if(!o)return;S.mode=o.dataset.mode;pick(el('modeOpts'),'mode',S.mode);
+  el('loopLenCard').classList.toggle('hide',S.mode==='single');
+  el('lenLabel').textContent=S.mode==='drill'?'Follow-up depth':'Number of questions';};
+el('srcOpts').onclick=e=>{const o=e.target.closest('.opt');if(!o)return;S.src=o.dataset.src;pick(el('srcOpts'),'src',S.src);
+  el('themeWrap').classList.toggle('hide',S.src!=='theme');el('freeWrap').classList.toggle('hide',S.src!=='free');};
+el('themeOpts').onclick=e=>{const o=e.target.closest('.opt');if(!o)return;S.theme=o.dataset.theme;pick(el('themeOpts'),'theme',S.theme);};
+el('lenOpts').onclick=e=>{const o=e.target.closest('.opt');if(!o)return;S.len=+o.dataset.len;pick(el('lenOpts'),'len',o.dataset.len);};
+el('inputOpts').onclick=e=>{const o=e.target.closest('.opt');if(!o)return;S.input=o.dataset.input;pick(el('inputOpts'),'input',S.input);};
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR) el('voiceWarn').classList.remove('hide');
+
+// ---------- tic detection ----------
+function analyze(text){
+  const t=' '+text.toLowerCase().replace(/[.,!?;:]/g,' ')+' ';
+  const words=(text.trim().match(/\S+/g)||[]).length;
+  const c=re=>(t.match(re)||[]).length;
+  const right=c(/\bright\b/g);
+  const kind=c(/\bkind of\b/g)+c(/\bkinda\b/g)+c(/\bsort of\b/g);
+  const fill=c(/\bum\b/g)+c(/\buh\b/g)+c(/\byou know\b/g)+c(/\bbasically\b/g)+c(/\bactually\b/g)+c(/\blike\b/g);
+  const lateral=c(/\bthe other part\b/g)+c(/\bone more thing\b/g)+c(/\banother thing\b/g);
+  const checkpoint=/\b(go deeper|high level|want me to|dig into|pull on)\b/.test(t);
+  const tail=text.trim().split(/\s+/).slice(-14).join(' ').toLowerCase();
+  const weakClose=/\b(yeah|cool|sounds good|that'?s it|i guess|or whatever|so yeah)\s*$/.test(tail);
+  return {words,right,kind,fill,lateral,checkpoint,weakClose};
+}
+
+// ---------- flow ----------
+let timerInt=null,secs=0,rec=null,transcriptText='',running=false;
+const TARGET=90,FULL=120,C=2*Math.PI*105;
+el('ringfg').style.strokeDasharray=C;
+
+function resolveOpening(){
+  if(S.src==='free'){ const q=el('freeQ').value.trim(); return q|| 'Walk me through the hardest technical decision you have made.'; }
+  const pool=THEMES[S.theme]; return pool[Math.floor(Math.random()*pool.length)];
+}
+el('startBtn').onclick=()=>{
+  if(S.input==='voice'&&!SR){S.input='text';pick(el('inputOpts'),'input','text');}
+  S.results=[];S.idx=0;
+  if(S.mode==='loop'){
+    const pool=S.src==='free'?[resolveOpening()]:[...THEMES[S.theme]];
+    S.queue=[]; for(let i=0;i<S.len;i++){ S.queue.push(pool[i%pool.length]); }
+    if(S.src!=='free'){ S.queue=shuffle(pool).slice(0,S.len); while(S.queue.length<S.len)S.queue.push(pool[0]); }
+  } else if(S.mode==='drill'){
+    S.queue=[resolveOpening()]; S.drillLeft=S.len; // follow-ups generated as we go
+  } else {
+    S.queue=[resolveOpening()];
+  }
+  show('practice'); loadQuestion();
+};
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function show(name){['setup','practice','feedback','summary'].forEach(n=>el(n).classList.toggle('hide',n!==name));window.scrollTo(0,0);}
+
+function loadQuestion(){
+  const q=S.queue[S.idx];
+  let meta=S.mode==='drill'?(S.idx===0?'Opening':'Follow-up '+S.idx):S.theme;
+  el('qmeta').innerHTML=(S.mode==='drill'?'<b>Drill</b> · ':S.mode==='loop'?'<b>Loop</b> · ':'')+meta;
+  el('qprog').textContent=S.mode==='single'?'Single':(S.mode==='drill'?('Q '+(S.idx+1)+' / '+(S.len+1)):('Q '+(S.idx+1)+' / '+S.queue.length));
+  el('qtext').textContent=q;
+  secs=0;transcriptText='';running=false;
+  el('bigtime').textContent='0:00';el('ringstate').textContent='headline window';
+  el('ringfg').style.stroke='var(--steel)';el('ringfg').style.strokeDashoffset=C;
+  el('cue').classList.remove('show');el('bigtime').classList.remove('pulsing');
+  el('cue').textContent='Checkpoint. Pause and hand them the wheel.';
+  ['cWords','cRight','cKind','cFill'].forEach(id=>{el(id).className='counter';el(id).querySelector('.n').textContent='0';});
+  el('transcript').textContent='';el('answerBox').value='';
+  el('voiceArea').classList.toggle('hide',S.input!=='voice');
+  el('textArea').classList.toggle('hide',S.input!=='text');
+  el('recBtn').textContent='Start speaking';el('recBtn').classList.remove('live');
+  if(S.input==='text'){startTimer();el('answerBox').oninput=()=>updateCounters(el('answerBox').value);}
+}
+function startTimer(){
+  if(running)return;running=true;
+  timerInt=setInterval(()=>{
+    secs++;
+    el('bigtime').textContent=Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0');
+    el('ringfg').style.strokeDashoffset=C*(1-Math.min(secs,FULL)/FULL);
+    if(secs<TARGET){el('ringstate').textContent='headline window';}
+    else if(secs===TARGET){el('ringfg').style.stroke='var(--amber)';el('ringstate').textContent='CHECKPOINT';el('cue').classList.add('show');el('bigtime').classList.add('pulsing');}
+    else{el('ringstate').textContent='overtime +'+(secs-TARGET)+'s';el('ringfg').style.stroke='var(--warn)';el('cue').textContent='Past the headline. Are you volunteering depth they did not ask for?';}
+  },1000);
+}
+function updateCounters(text){
+  const a=analyze(text);
+  el('cWords').querySelector('.n').textContent=a.words;
+  const set=(id,v)=>{const c=el(id);c.querySelector('.n').textContent=v;c.classList.toggle('hit',v>0);};
+  set('cRight',a.right);set('cKind',a.kind);set('cFill',a.fill);
+}
+el('recBtn').onclick=()=>{
+  if(!rec){
+    rec=new SR();rec.continuous=true;rec.interimResults=true;rec.lang='en-US';
+    rec.onresult=ev=>{let interim='',fin='';for(let i=ev.resultIndex;i<ev.results.length;i++){const r=ev.results[i];if(r.isFinal)fin+=r[0].transcript+' ';else interim+=r[0].transcript;}
+      if(fin)transcriptText+=fin;el('transcript').textContent=(transcriptText+interim).trim();updateCounters(transcriptText+interim);};
+    rec.onend=()=>{if(el('recBtn').classList.contains('live')){try{rec.start();}catch(e){}}};
+  }
+  const live=el('recBtn').classList.toggle('live');
+  if(live){el('recBtn').textContent='Stop';try{rec.start();}catch(e){}startTimer();}
+  else{el('recBtn').textContent='Resume';rec.stop();}
+};
+el('abortBtn').onclick=()=>{cleanup();show('setup');};
+el('doneBtn').onclick=finishAnswer;
+function cleanup(){if(timerInt)clearInterval(timerInt);timerInt=null;running=false;if(rec){try{rec.stop();}catch(e){}el('recBtn').classList.remove('live');}}
+
+function finishAnswer(){
+  const text=S.input==='voice'?transcriptText.trim():el('answerBox').value.trim();
+  cleanup();
+  const r={q:S.queue[S.idx],text,secs,a:analyze(text)};
+  S.results.push(r);
+  renderDelivery(r);
+  el('contentFb').innerHTML=CFG.key?'<div class="loading"><div class="spin"></div> Grading your answer...</div>':'<div class="note flag"><span class="nlab">Grading off</span>Add your Anthropic API key in Settings to grade content. Delivery metrics above are live.</div>';
+  show('feedback');
+  if(CFG.key) gradeContent(r);
+}
+
+function renderDelivery(r){
+  el('fbCat').textContent=(S.mode==='drill'?(r===S.results[0]?'Opening':'Follow-up'):S.theme);
+  el('fbQ').textContent=r.q;
+  const mm=Math.floor(r.secs/60)+':'+String(r.secs%60).padStart(2,'0');
+  const over=r.secs-TARGET;const a=r.a;
+  let tline,tcls;
+  if(r.secs<=TARGET){tline='Headline landed inside 90s ('+mm+'). Good discipline.';tcls='add';}
+  else if(over<=30){tline='Ran to '+mm+', '+over+'s past the window. Tighten, but close.';tcls='';}
+  else{tline='Ran to '+mm+', '+over+'s of overtime. This is the unprompted-depth pattern. Headline then checkpoint.';tcls='cut';}
+  const pill=(ok,txt)=>'<span class="pill '+(ok?'ok':'no')+'">'+txt+'</span>';
+  let h='<div class="note '+tcls+'"><span class="nlab">Timing</span>'+tline+'</div><div style="margin-top:10px">';
+  h+=a.checkpoint?pill(true,'checkpoint line ✓'):pill(false,'no checkpoint line');
+  h+=a.right>0?pill(false,'"right?" ×'+a.right):pill(true,'no "right?" ✓');
+  h+=a.kind>0?pill(false,'"kind of" ×'+a.kind):pill(true,'no "kind of" ✓');
+  h+=a.fill>2?pill(false,'fillers ×'+a.fill):pill(true,'fillers low ✓');
+  h+=a.lateral>0?pill(false,'lateral drift ×'+a.lateral):pill(true,'no lateral drift ✓');
+  h+=a.weakClose?pill(false,'weak close'):pill(true,'clean close ✓');
+  h+='</div><div class="keymeta"><b>'+a.words+'</b> words at <b>'+Math.round(a.words/Math.max(r.secs,1)*60)+'</b> wpm.</div>';
+  el('deliveryFb').innerHTML=h;
+}
+
+async function gradeContent(r){
+  const tgt=el('contentFb');
+  if(!r.text||r.text.split(/\s+/).length<8){tgt.innerHTML='<div class="note">Too little captured to grade. '+(S.input==='voice'?'Check the mic and retry.':'Type a fuller answer.')+'</div>';r.score=null;return;}
+  const hasBank=!!CFG.bank;
+  const sys="You are a sharp, fair, demanding interview coach for a senior, lead, or principal Technical Program Manager. You judge the candidate's spoken answer ON ITS OWN MERITS. There is no model answer. Do not invent facts the candidate did not say, and do not reward buzzwords. Hold them honest: flag vagueness, unsupported numbers, claims that sound like individual-contributor or engineering authorship rather than program ownership, hedging of their own work, and whether they actually answered THIS question rather than drifting to a rehearsed story. Reward specificity, a clear decision with a rejected alternative when relevant, honest ownership boundaries, and a tight structure. Keep distinct: signals available before a decision are evidence; outcomes after are results. Respect that the candidate is a freeform speaker whose one trained habit is a 90-second headline then a checkpoint pause; do not penalize natural style, only undisciplined sprawl. Be concise and direct, no flattery. Respond with ONLY a JSON object, no markdown, no preamble.";
+  let prompt=sys+"\n\nQUESTION: "+r.q+"\n\nCANDIDATE ANSWER (speech transcript, punctuation may be imperfect):\n\""+r.text+"\"\n";
+  if(hasBank){ prompt+="\nThe candidate's OWN STORY BANK is below. Use it ONLY to fact-check: flag any metric, scope, role, or claim in the answer that contradicts, inflates, or is unsupported by this record. Do not treat the bank as a required script; an answer can be excellent without covering everything in it.\n---STORY BANK---\n"+CFG.bank.slice(0,12000)+"\n---END---\n"; }
+  prompt+="\nReturn JSON exactly: {\"score\": <1-5 integer>, \"summary\": \"<one direct sentence>\", \"star\": {\"S\":<bool>,\"T\":<bool>,\"A\":<bool>,\"R\":<bool>}, \"answeredQuestion\": <bool>, \"specificity\": \"low|medium|high\", \"strengths\": [\"<short, concrete>\"], \"honestyFlags\": [\"<vagueness, unsupported claim, overclaim, hedge, IC-framing; empty if none>\"], "+(hasBank?"\"bankFlags\": [\"<contradiction or inflation vs the bank; empty if none>\"], ":"\"bankFlags\": [], ")+"\"cut\": \"<one specific thing to cut>\", \"add\": \"<one specific thing to add or sharpen>\", \"followUp\": \"<one sharp interviewer follow-up question grounded in what they actually said>\"}";
+
+  try{
+    const resp=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"x-api-key":CFG.key,"anthropic-version":"2023-06-01","content-type":"application/json","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:CFG.model,max_tokens:1100,messages:[{role:"user",content:prompt}]})
+    });
+    if(!resp.ok){ const err=await resp.json().catch(()=>({})); throw new Error((err.error&&err.error.message)||('HTTP '+resp.status)); }
+    const data=await resp.json();
+    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').replace(/```json|```/g,'').trim();
+    const fb=JSON.parse(txt);
+    r.score=fb.score;r.followUp=fb.followUp;
+    renderContent(fb,hasBank);
+  }catch(e){
+    r.score=null;
+    tgt.innerHTML='<div class="note cut"><span class="nlab">Grading failed</span>'+esc(e.message||'Request error')+'. Check your API key, model, and connection. Delivery metrics above are still accurate.</div>';
+  }
+}
+
+function renderContent(fb,hasBank){
+  const pill=(ok,txt)=>'<span class="pill '+(ok?'ok':'no')+'">'+txt+'</span>';
+  const spPill=s=>'<span class="pill '+(s==='high'?'ok':s==='medium'?'mid':'no')+'">specificity: '+s+'</span>';
+  let h='<div class="verdict"><div class="score">'+fb.score+'<small>/5</small></div><div class="vtext">'+esc(fb.summary)+'</div></div>';
+  h+='<div class="fb-sec"><h3>Structure</h3>'+pill(fb.star.S,'Situation')+pill(fb.star.T,'Task')+pill(fb.star.A,'Action')+pill(fb.star.R,'Result')+pill(fb.answeredQuestion,fb.answeredQuestion?'answered the question ✓':'drifted off the question')+spPill(fb.specificity)+'</div>';
+  if(fb.strengths&&fb.strengths.length)h+='<div class="fb-sec"><h3>Worked</h3>'+fb.strengths.map(x=>'<div class="note add">'+esc(x)+'</div>').join('')+'</div>';
+  if(fb.honestyFlags&&fb.honestyFlags.length)h+='<div class="fb-sec"><h3>Keeping you honest</h3>'+fb.honestyFlags.map(x=>'<div class="note flag">'+esc(x)+'</div>').join('')+'</div>';
+  if(hasBank&&fb.bankFlags&&fb.bankFlags.length)h+='<div class="fb-sec"><h3>Vs your story bank</h3>'+fb.bankFlags.map(x=>'<div class="note cut">'+esc(x)+'</div>').join('')+'</div>';
+  h+='<div class="fb-sec"><h3>Sharpen it</h3><div class="note cut"><span class="nlab">Cut</span>'+esc(fb.cut)+'</div><div class="note add"><span class="nlab">Add</span>'+esc(fb.add)+'</div></div>';
+  if(fb.followUp)h+='<div class="followup"><span class="nlab">'+(S.mode==='drill'?'Their next question':'They might ask next')+'</span>'+esc(fb.followUp)+'</div>';
+  el('contentFb').innerHTML=h;
+}
+function esc(s){return (s==null?'':String(s)).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));}
+
+el('retryBtn').onclick=()=>{S.results.pop();show('practice');loadQuestion();};
+el('nextBtn').onclick=()=>{
+  const last=S.results[S.results.length-1];
+  if(S.mode==='drill'){
+    if(S.idx<S.len && last && last.followUp){ S.queue.push(last.followUp); S.idx++; show('practice'); loadQuestion(); return; }
+    if(S.idx<S.len && !last.followUp){ // grading off or failed: ask user to continue manually
+      const fq=prompt('No follow-up was generated (grading may be off). Type the next question to continue, or cancel to end.');
+      if(fq){ S.queue.push(fq); S.idx++; show('practice'); loadQuestion(); return; }
+    }
+    renderSummary(); show('summary'); return;
+  }
+  if(S.mode==='loop' && S.idx<S.queue.length-1){ S.idx++; show('practice'); loadQuestion(); return; }
+  if(S.mode==='loop'){ renderSummary(); show('summary'); return; }
+  show('setup'); // single
+};
+el('restartBtn').onclick=()=>show('setup');
+
+function renderSummary(){
+  let rows='',agg={right:0,kind:0,fill:0,lateral:0,over:0,weak:0,nocheck:0};
+  S.results.forEach((r,i)=>{
+    const sc=r.score!=null?r.score+'/5':'—';
+    rows+='<div class="summ-row"><span>Q'+(i+1)+(S.mode==='drill'?(i===0?' · opening':' · follow-up'):'')+'</span><span class="sc">'+sc+'</span></div>';
+    agg.right+=r.a.right;agg.kind+=r.a.kind;agg.fill+=r.a.fill;agg.lateral+=r.a.lateral;
+    if(r.secs>TARGET)agg.over++;if(r.a.weakClose)agg.weak++;if(!r.a.checkpoint)agg.nocheck++;
+  });
+  el('summRows').innerHTML=rows;
+  const p=[];
+  if(agg.over>=2)p.push('Overran the 90s headline on '+agg.over+' answers. The checkpoint pause is the fix.');
+  if(agg.nocheck>=2)p.push('Skipped the checkpoint line on '+agg.nocheck+' answers. Build the "want me to go deeper?" habit.');
+  if(agg.right>=3)p.push('"right?" showed up '+agg.right+' times. Replace with a full stop.');
+  if(agg.kind>=3)p.push('"kind of" appeared '+agg.kind+' times. It hedges your own work.');
+  if(agg.fill>=8)p.push('Filler ran high ('+agg.fill+'). Let silence sit.');
+  if(agg.lateral>=2)p.push('Lateral expansion on '+agg.lateral+' answers. Make the point, then stop.');
+  if(agg.weak>=2)p.push('Weak trailing closings on '+agg.weak+' answers. Land a deliberate close.');
+  if(!p.length)p.push('Clean run on the mechanical habits. Keep pushing on content depth and honesty.');
+  el('patterns').innerHTML=p.map(x=>'<div class="note">'+x+'</div>').join('');
+}
+
+loadCfg();
+</script>
+</body>
+</html>
