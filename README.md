@@ -40,7 +40,3 @@ The content review (score, structure, honesty flags, cut and add notes, and the 
 ## Tech
 
 Plain HTML, CSS, and JavaScript in a single file. The Web Speech API for voice. The Anthropic Messages API for grading, called directly from the browser with a bring-your-own-key pattern.
-
----
-
-Built by Amit Porwal.
